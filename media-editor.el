@@ -13,14 +13,15 @@ TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
 
   (let* ((path (expand-file-name path))
          (dir-name (replace-regexp-in-string "/" "!" path))
-         (tmp-dir (format "/tmp/emacs-media/%s" dir-name))
+         (tmp-dir (format "/tmp/emeded/%s" dir-name))
          (frame-file (format "%s/%s.jpg" tmp-dir time)))
     ;; Make the directory in /tmp if it doesn't exist
     (unless (file-directory-p tmp-dir)
       (shell-command-to-string (format "mkdir -p '%s'" tmp-dir)))
 
     ;; Use ffmpeg to extract the frame at the correct time
-    (shell-command-to-string (format "ffmpeg -ss %s -i %s -vframes 1 -q:v 2 %s" time path frame-file) )
+    (unless (file-regular-p frame-file)
+      (shell-command-to-string (format "ffmpeg -ss %s -i %s -vframes 1 -q:v 2 %s" time path frame-file)))
     frame-file))
 
 (defun emeded--video-duration (path)
@@ -40,7 +41,7 @@ TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
   (interactive "fEdit File: ")
   (setq-local emeded-current-file (emeded--file-plist path)))
 
-(defun emeded--display-frame ()
+(defun emeded-display-frame ()
   "Display an image of the frame at the point position in the video.
 
 Figures out the potion of how far the point is through the current
