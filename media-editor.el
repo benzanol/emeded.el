@@ -5,6 +5,13 @@
 (defvar-local emeded-current-file nil
   "A plist of storing the file being edited in the current buffer.")
 
+(defvar emeded-temp-directory "/tmp/emeded")
+
+(defun emeded--file-temp-directory (path)
+  "The temp directory used by emeded to store files related to PATH."
+  (format "%s/%s" (directory-file-name emeded-temp-directory)
+          (replace-regexp-in-string "/" "!" path)))
+
 (defun emeded--frame-at-time (path time)
   "Return the path to an image of the frame in the video PATH at time TIME.
 
@@ -12,8 +19,7 @@ PATH should be a file path to a video file.
 TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
 
   (let* ((path (expand-file-name path))
-         (dir-name (replace-regexp-in-string "/" "!" path))
-         (tmp-dir (format "/tmp/emeded/%s" dir-name))
+         (tmp-dir (emeded--file-temp-directory path))
          (frame-file (format "%s/%s.jpg" tmp-dir time)))
     ;; Make the directory in /tmp if it doesn't exist
     (unless (file-directory-p tmp-dir)
