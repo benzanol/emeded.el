@@ -2,6 +2,9 @@
 ;;; Commentary:
 ;;; Code:
 
+(defvar-local emeded-current-file nil
+  "A plist of storing the file being edited in the current buffer.")
+
 (defun emeded--frame-at-time (path time)
   "Return the path to an image of the frame in the video PATH at time TIME.
 
@@ -25,6 +28,16 @@ TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
   (string-to-number
    (shell-command-to-string
     (format "ffprobe -i %s -v quiet -show_entries format=duration -hide_banner -of default=noprint_wrappers=1:nokey=1"
-            path))))
+            (expand-file-name path)))))
+
+(defun emeded--file-plist (path)
+  "Return a plist of properties of the file at PATH."
+  (list :path (expand-file-name path)
+        :duration (emeded--video-duration path)))
+
+(defun emeded-find-file (path)
+  "Edit the file PATH using emeded."
+  (interactive "fEdit File: ")
+  (setq-local emeded-current-file (emeded--file-plist path)))
 
 ;;; media-editor.el ends here
