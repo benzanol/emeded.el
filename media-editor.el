@@ -2,10 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
-(defun emeded-frame-at-time (path time)
+(defun emeded--frame-at-time (path time)
   "Return the path to an image of the frame in the video PATH at time TIME.
+
 PATH should be a file path to a video file.
-TIME should be a string with format HH:MM:SS"
+TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
 
   (let* ((path (expand-file-name path))
          (dir-name (replace-regexp-in-string "/" "!" path))
@@ -18,5 +19,12 @@ TIME should be a string with format HH:MM:SS"
     ;; Use ffmpeg to extract the frame at the correct time
     (shell-command-to-string (format "ffmpeg -ss %s -i %s -vframes 1 -q:v 2 %s" time path frame-file) )
     frame-file))
+
+(defun emeded--video-duration (path)
+  "Return the duration, as a float, of the video at PATH."
+  (string-to-number
+   (shell-command-to-string
+    (format "ffprobe -i %s -v quiet -show_entries format=duration -hide_banner -of default=noprint_wrappers=1:nokey=1"
+            path))))
 
 ;;; media-editor.el ends here
