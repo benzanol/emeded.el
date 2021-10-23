@@ -9,6 +9,15 @@
 
 (defvar emeded-temp-directory "/tmp/emeded")
 
+(defvar emeded-waveform-string "|"
+  "The character used to make up waveform graphs.")
+
+(defvar emeded-waveform-height 5
+  "Height of the waveform graph.")
+
+(defvar emeded-waveform-width 100
+  "Width of the waveform graph.")
+
 (defun emeded--file-temp-directory (path)
   "The temp directory used by emeded to store files related to PATH."
   (setq path (expand-file-name path))
@@ -18,6 +27,10 @@
     (unless (file-directory-p dir)
       (shell-command-to-string (format "mkdir -p '%s'" dir)))
     dir))
+
+(defun emeded--buffer-name (path)
+  "Return the emeded buffer name that should be used for PATH."
+  (format "*Emeded %s*"(file-name-nondirectory path)))
 
 (defun emeded--frame-at-time (path time)
   "Return the path to an image of the frame in the video PATH at time TIME.
@@ -91,7 +104,7 @@ string is a row of the graph WIDTH characters long."
 
     ;; Turn the list of heights ito a string to be displayed
     (mapconcat (lambda (level)
-                 (mapconcat (lambda (h) (if (>= h level) "|" "-")) heights ""))
+                 (mapconcat (lambda (h) (if (>= h level) emeded-waveform-string " ")) heights ""))
                (reverse (number-sequence 1 height)) "\n")))
 
 (defun emeded--file-plist (path)
@@ -102,7 +115,24 @@ string is a row of the graph WIDTH characters long."
 (defun emeded-find-file (path)
   "Edit the file PATH using emeded."
   (interactive "fEdit File: ")
-  (setq-local emeded-current-file (emeded--file-plist path)))
+  (let ((buf (emeded--buffer-name path))
+        (dir (emeded--file-temp-directory path)))
+
+    ;; Maybe create, then switch to the buffer to edit the file
+    (switch-to-buffer (get-buffer-create buf))
+
+    ;; Clear the buffer in case it was being used before
+    (read-only-mode 0)
+    (delete-region (point-min) (point-max))
+    (remove-images (point-min) (point-max))
+    
+    ;; Set the current file variable
+    (setq-local emeded-current-file (emeded--file-plist path))
+
+    ;; Insert the waveform graph
+    (insert (emeded--waveform-graph path emeded-waveform-width emeded-waveform-height))
+
+    (read-only-mode 1)))
 
 (defun emeded-display-frame ()
   "Display an image of the frame at the point position in the video.
