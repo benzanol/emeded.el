@@ -40,4 +40,21 @@ TIME should be a valid ffmpeg timestamp: `[HH:][MM:]SS[.SS]`"
   (interactive "fEdit File: ")
   (setq-local emeded-current-file (emeded--file-plist path)))
 
+(defun emeded--display-frame ()
+  "Display an image of the frame at the point position in the video.
+
+Figures out the potion of how far the point is through the current
+line, multiplies that portion by the video duration, and displays
+the frame at this calculated time."
+  (let* ((portion (/ (float (current-column))
+                     (max 1 (save-excursion (end-of-line) (current-column)))))
+         (duration (plist-get emeded-current-file :duration))
+         (frame-path (emeded--frame-at-time
+                      (plist-get emeded-current-file :path)
+                      (number-to-string (* portion (1- duration)))))
+         (pixel-width (car (window-text-pixel-size nil (line-beginning-position) (line-end-position))))
+         (img (create-image frame-path nil nil :width pixel-width)))
+    (remove-images (point-min) (point-max))
+    (put-image img (point-max))))
+
 ;;; media-editor.el ends here
